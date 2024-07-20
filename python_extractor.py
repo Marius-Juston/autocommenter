@@ -391,7 +391,7 @@ Documentation:
                     else:
                         line_strip = index
 
-        if line_strip:
+        if not line_strip:
             return txt
 
         for i in range(len(lines)):
