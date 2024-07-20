@@ -231,10 +231,41 @@ class PythonExtractor:
 
 class AIDocumenter:
     def __init__(self):
-        model = Ollama(model="dolphin-mistral")
+        # model = Ollama(model="dolphin-mistral")
+        model = Ollama(model="codestral")
 
         function_documentation_template = """
-            Given the following Python function or Class, generate comprehensive documentation including a description, parameters, and return value in reStructredText format.
+            Write comprehensive documentation for the following Python code using reStructuredText (reST) format. The documentation should include a description, parameter explanations, return type, and examples. Ensure the documentation is clear, concise, and follows standard conventions.
+
+Example output:
+Function Name
+=============
+
+Description
+-----------
+<Brief description of the function's purpose.>
+
+Parameters
+----------
+- **a** (*int*): <Explanation of the first parameter.>
+- **b** (*int*): <Explanation of the second parameter.>
+
+Returns
+-------
+- **int**: <Explanation of the return type.>
+
+Examples
+--------
+.. code-block:: python
+
+    <Example 1>
+
+    <Example 2>
+
+Notes
+-----
+<Any additional notes or caveats.>
+
 
             Function:
             {function}
