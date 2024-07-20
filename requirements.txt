@@ -1,0 +1,4 @@
+black
+langchain_community
+langchain_core
+langchain-ollama
