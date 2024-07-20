@@ -132,7 +132,7 @@ class PythonExtractor:
                 modified = self.generate_doc(class_node)
 
             for func_node in extracted_content["functions"]:
-                print(f"\nClass: {func_node['node'].name}")
+                print(f"\nFunction: {func_node['node'].name}")
                 modified = self.generate_doc(func_node)
 
             if modified:
@@ -175,8 +175,6 @@ class PythonExtractor:
         class_node: Union[ast.ClassDef, ast.FunctionDef] = node['node']
 
         node_type: str = node['type']
-
-
 
         documentation = self.get_docstring(class_node)
 
@@ -222,7 +220,7 @@ class PythonExtractor:
         ])
 
     def api_find_docstring(self, node):
-        docstring = self.ai_documenter(node['source'])
+        docstring = self.ai_documenter(node['source'], node['type'])
 
         print(docstring)
 
@@ -273,7 +271,48 @@ Notes
             Documentation:
             """
 
-        prompt = ChatPromptTemplate.from_messages(
+        class_documentation_template = """
+                    Write comprehensive header documentation for the following Python class using reStructuredText (reST) format. The documentation should include a description, attribute explanations, method summaries, inheritance diagrams, and examples. Ensure the documentation is clear, concise, and follows standard conventions.
+
+        Class Name
+==========
+
+Description
+-----------
+<Brief description of the class's purpose.>
+
+Attributes
+----------
+- **attribute_name** (*type*): <Explanation of the attribute.>
+
+Methods
+-------
+- **method_name(parameters)**: <Brief description of the method.>
+
+Inheritance Diagram
+-------------------
+.. inheritance-diagram:: module.ClassName
+   :parts: 1
+
+Examples
+--------
+.. code-block:: python
+
+    <Example 1>
+
+    <Example 2>
+
+Notes
+-----
+<Any additional notes or caveats.>
+
+                    Class:
+                    {function}
+
+                    Documentation:
+                    """
+
+        func_prompt = ChatPromptTemplate.from_messages(
             [
                 (
                     "system",
@@ -282,7 +321,19 @@ Notes
             ]
         )
 
-        self.function_chain = prompt | model
+        class_prompt = ChatPromptTemplate.from_messages(
+            [
+                (
+                    "system",
+                    class_documentation_template,
+                )
+            ]
+        )
+
+        self.function_chain = func_prompt | model
+        self.class_chain = class_prompt | model
+
+        self.chain = {'functions': self.function_chain, 'classes': self.class_chain}
 
     def normalize_left_strip(self, txt: str):
         lines = txt.split(os.linesep)
@@ -315,8 +366,9 @@ Notes
 
         return os.linesep.join(lines)
 
-    def __call__(self, function_source: str):
-        response = self.function_chain.invoke(
+    def __call__(self, function_source: str, type: str):
+
+        response = self.chain[type].invoke(
             {"function": function_source}
         ).strip()
 
