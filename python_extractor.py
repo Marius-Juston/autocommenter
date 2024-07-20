@@ -235,7 +235,7 @@ class AIDocumenter:
         model = Ollama(model="codestral")
 
         function_documentation_template = """
-            Write comprehensive documentation for the following Python code using reStructuredText (reST) format. The documentation should include a description, parameter explanations, return type, and examples. Ensure the documentation is clear, concise, and follows standard conventions.
+Write comprehensive documentation for the following Python code using reStructuredText (reST) format. The documentation should include a description, parameter explanations, return type, and examples. Ensure the documentation is clear, concise, and follows standard conventions.
 
 Example output:
 Function Name
@@ -267,14 +267,14 @@ Notes
 <Any additional notes or caveats.>
 
 
-            Function:
-            {function}
+Function:
+{function}
 
-            Documentation:
-            """
+Documentation:
+"""
 
         class_documentation_template = """
-                    Write comprehensive header documentation for the following Python class using reStructuredText (reST) format. The documentation should include a description, attribute explanations, method summaries, inheritance diagrams, and examples. Ensure the documentation is clear, concise, and follows standard conventions.
+Write comprehensive header documentation for the following Python class using reStructuredText (reST) format. The documentation should include a description, attribute explanations, method summaries, inheritance diagrams, and examples. Ensure the documentation is clear, concise, and follows standard conventions.
 
         Class Name
 ==========
@@ -308,11 +308,11 @@ Notes
 -----
 <Any additional notes or caveats.>
 
-                    Class:
-                    {function}
+Class:
+{function}
 
-                    Documentation:
-                    """
+Documentation:
+"""
 
         func_prompt = ChatPromptTemplate.from_messages(
             [
