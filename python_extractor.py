@@ -125,16 +125,19 @@ class PythonExtractor:
 
             tree, extracted_content = self.extract_classes_and_functions(file_content)
 
+            modified = False
+
             for class_node in extracted_content['classes']:
                 print(f"\nClass: {class_node['node'].name}")
-                self.generate_doc(class_node)
+                modified = self.generate_doc(class_node)
 
             for func_node in extracted_content["functions"]:
                 print(f"\nClass: {func_node['node'].name}")
-                self.generate_doc(func_node)
+                modified = self.generate_doc(func_node)
 
-            new_content = ast.unparse(tree)
-            self.write_file(file_path, new_content)
+            if modified:
+                new_content = ast.unparse(tree)
+                self.write_file(file_path, new_content)
 
     def write_file(self, file_path, content):
         """
@@ -179,10 +182,12 @@ class PythonExtractor:
 
         hash = self.generate_func_hash(class_node, has_documentation=not (documentation is None))
 
+        modified = False
+
         if documentation and self.template_message in documentation:
             if  node_type == 'functions':
 
-                previous_hash = documentation.split(' ')[-1]
+                previous_hash = documentation.split(' ')[-1].strip()
 
                 if not (previous_hash is hash):
                     print(
@@ -194,20 +199,24 @@ class PythonExtractor:
 
 
                 self.update_docstring(class_node, text)
+
+                modified =  True
         if not documentation:
             text = self.api_find_docstring(node)
             text = self.parse_doc(text, hash)
 
             self.set_docstring(class_node, text)
 
+            modified = True
+
+        return modified
+
     def parse_doc(self, text:str, hash:str):
 
         return os.linesep.join([
-            '\"\"\"',
             text,
             self.template_message,
-            f'hash {hash}',
-            '\"\"\"'
+            f'hash {hash}'
         ])
 
 
