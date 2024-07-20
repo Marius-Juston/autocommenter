@@ -1,11 +1,10 @@
 import ast
-import datetime
+import hashlib
 import os
 from copy import deepcopy
 from typing import Union, Dict
-import black
-import hashlib
 
+import black
 from langchain_community.llms.ollama import Ollama
 from langchain_core.prompts import ChatPromptTemplate
 
@@ -129,15 +128,18 @@ class PythonExtractor:
 
             for class_node in extracted_content['classes']:
                 print(f"\nClass: {class_node['node'].name}")
-                modified = self.generate_doc(class_node)
+                modified = modified or self.generate_doc(class_node)
 
             for func_node in extracted_content["functions"]:
                 print(f"\nFunction: {func_node['node'].name}")
-                modified = self.generate_doc(func_node)
+                modified = modified or self.generate_doc(func_node)
 
             if modified:
                 new_content = ast.unparse(tree)
-                self.write_file(file_path, new_content)
+
+                formatted_new_content = black.format_str(new_content, mode=black.Mode())
+
+                self.write_file(file_path, formatted_new_content)
 
     def write_file(self, file_path, content):
         """
