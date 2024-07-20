@@ -211,7 +211,7 @@ class PythonExtractor:
 
         node_type: str = node['type']
 
-        print(f"Working on {node_type}: {class_node.name}")
+        print(f"Working on {node_type}: {class_node.name}", f"from {node['parent'].name}" if node['parent'] else "" )
 
         documentation = self.get_docstring(class_node)
 
