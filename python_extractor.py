@@ -128,11 +128,11 @@ class PythonExtractor:
 
             for class_node in extracted_content['classes']:
                 print(f"\nClass: {class_node['node'].name}")
-                modified = modified or self.generate_doc(class_node)
+                modified = self.generate_doc(class_node) or modified
 
             for func_node in extracted_content["functions"]:
                 print(f"\nFunction: {func_node['node'].name}")
-                modified = modified or self.generate_doc(func_node)
+                modified = self.generate_doc(func_node) or modified
 
             if modified:
                 new_content = ast.unparse(tree)
