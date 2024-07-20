@@ -391,6 +391,9 @@ Documentation:
                     else:
                         line_strip = index
 
+        if line_strip:
+            return txt
+
         for i in range(len(lines)):
             first_char = lines[i].lstrip()
 
