@@ -185,22 +185,21 @@ class PythonExtractor:
         modified = False
 
         if documentation and self.template_message in documentation:
-            if  node_type == 'functions':
+            if node_type == 'functions':
 
                 previous_hash = documentation.split(' ')[-1].strip()
 
-                if not (previous_hash is hash):
+                if not (previous_hash == hash):
                     print(
                         "There is a hash mismatch between the function and the last time the documentation for it was generated.")
 
-                text = self.api_find_docstring(node)
+                    text = self.api_find_docstring(node)
 
-                text = self.parse_doc(text, hash)
+                    text = self.parse_doc(text, hash)
 
+                    self.update_docstring(class_node, text)
 
-                self.update_docstring(class_node, text)
-
-                modified =  True
+                    modified = True
         if not documentation:
             text = self.api_find_docstring(node)
             text = self.parse_doc(text, hash)
@@ -211,15 +210,16 @@ class PythonExtractor:
 
         return modified
 
-    def parse_doc(self, text:str, hash:str):
+    def parse_doc(self, text: str, hash: str):
 
         return os.linesep.join([
+            "",
             text,
             self.template_message,
-            f'hash {hash}'
+            f'hash {hash}',
+            ""
+            ""
         ])
-
-
 
     def api_find_docstring(self, node):
         docstring = self.ai_documenter(node['source'])
@@ -284,10 +284,43 @@ Notes
 
         self.function_chain = prompt | model
 
+    def normalize_left_strip(self, txt: str):
+        lines = txt.split(os.linesep)
+
+        line_strip = None
+
+        for line in lines:
+            lines_stripped = line.lstrip()
+
+            for mixes in ['====', '----']:
+                if lines_stripped.startswith(mixes):
+                    index = line.find(mixes)
+
+                    if line_strip:
+                        line_strip = min(index, line_strip)
+                    else:
+                        line_strip = index
+
+        for i in range(len(lines)):
+            first_char = lines[i].lstrip()
+
+            if len(first_char) == 0:
+                continue
+
+            text_index = lines[i].find(first_char[0])
+
+            max_stripping = min(line_strip, text_index)
+
+            lines[i] = lines[i][max_stripping:]
+
+        return os.linesep.join(lines)
+
     def __call__(self, function_source: str):
         response = self.function_chain.invoke(
             {"function": function_source}
-        )
+        ).strip()
+
+        response = self.normalize_left_strip(response)
 
         return response
 
