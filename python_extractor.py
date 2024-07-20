@@ -2,11 +2,35 @@ import ast
 import hashlib
 import os
 from copy import deepcopy
-from typing import Union, Dict
+from enum import Enum
+from typing import Union, Dict, Optional
 
 import black
 from langchain_community.llms.ollama import Ollama
 from langchain_core.prompts import ChatPromptTemplate
+
+class Type(Enum):
+    FUNCTIONS = 0
+    CLASSES = 1
+
+
+class ParentClassFinder(ast.NodeVisitor):
+    def __init__(self):
+        self.parent_classes = {}
+        self.current_class = None
+
+    def visit_ClassDef(self, node):
+        self.current_class = node
+        self.parent_classes[node] = None
+        self.generic_visit(node)
+        self.current_class = None
+
+    def visit_FunctionDef(self, node):
+        if self.current_class:
+            self.parent_classes[node] = self.current_class
+        else:
+            self.parent_classes[node] = None
+        self.generic_visit(node)
 
 
 class PythonExtractor:
@@ -28,22 +52,36 @@ class PythonExtractor:
             dict: A dictionary with class and function names as keys and their definitions as values.
         """
         tree = ast.parse(file_content)
-        result = {"classes": [], "functions": []}
+
+        finder = ParentClassFinder()
+        finder.visit(tree)
+
+        nodes = {}
 
         for node in ast.walk(tree):
-            data = {}
-
             if isinstance(node, (ast.ClassDef, ast.FunctionDef)):
+                data = {}
+
                 data['source'] = ast.get_source_segment(file_content, node)
                 data['doc'] = ast.get_docstring(node)
                 data['node'] = node
 
-                type = 'classes' if isinstance(node, ast.ClassDef) else 'functions'
+                type = Type.CLASSES if isinstance(node, ast.ClassDef) else Type.FUNCTIONS
                 data['type'] = type
 
-                result[type].append(data)
+                data['parent'] = finder.parent_classes[node]
 
-        return tree, result
+                nodes[node] = data
+
+        for n in nodes:
+            parent_node = nodes[n]['parent']
+
+            if parent_node:
+                nodes[n]['parent_source'] = nodes[parent_node]['source']
+            else:
+                nodes[n]['parent_source'] = None
+
+        return tree, nodes
 
     def read_file(self, file_path):
         """
@@ -126,12 +164,7 @@ class PythonExtractor:
 
             modified = False
 
-            for class_node in extracted_content['classes']:
-                print(f"\nClass: {class_node['node'].name}")
-                modified = self.generate_doc(class_node) or modified
-
-            for func_node in extracted_content["functions"]:
-                print(f"\nFunction: {func_node['node'].name}")
+            for func_node in extracted_content.values():
                 modified = self.generate_doc(func_node) or modified
 
             if modified:
@@ -178,6 +211,8 @@ class PythonExtractor:
 
         node_type: str = node['type']
 
+        print(f"Working on {node_type}: {class_node.name}")
+
         documentation = self.get_docstring(class_node)
 
         hash = self.generate_func_hash(class_node, has_documentation=not (documentation is None))
@@ -185,7 +220,7 @@ class PythonExtractor:
         modified = False
 
         if documentation and self.template_message in documentation:
-            if node_type == 'functions':
+            if node_type == Type.FUNCTIONS:
 
                 previous_hash = documentation.split(' ')[-1].strip()
 
@@ -222,7 +257,7 @@ class PythonExtractor:
         ])
 
     def api_find_docstring(self, node):
-        docstring = self.ai_documenter(node['source'], node['type'])
+        docstring = self.ai_documenter(node['source'], node['type'], node['parent_source'])
 
         print(docstring)
 
@@ -235,7 +270,7 @@ class AIDocumenter:
         model = Ollama(model="codestral")
 
         function_documentation_template = """
-Write comprehensive documentation for the following Python code using reStructuredText (reST) format. The documentation should include a description, parameter explanations, return type, and examples. Ensure the documentation is clear, concise, and follows standard conventions.
+Write comprehensive documentation for the following Python code using reStructuredText (reST) format. The documentation should include a description, parameter explanations, return type, and examples. Ensure the documentation is clear, concise, and follows standard conventions. If the function is from a class use that context to improve the description.
 
 Example output:
 Function Name
@@ -266,9 +301,11 @@ Notes
 -----
 <Any additional notes or caveats.>
 
-
 Function:
 {function}
+
+Class Context:
+{class}
 
 Documentation:
 """
@@ -335,7 +372,7 @@ Documentation:
         self.function_chain = func_prompt | model
         self.class_chain = class_prompt | model
 
-        self.chain = {'functions': self.function_chain, 'classes': self.class_chain}
+        self.chain = {Type.FUNCTIONS: self.function_chain, Type.CLASSES: self.class_chain}
 
     def normalize_left_strip(self, txt: str):
         lines = txt.split(os.linesep)
@@ -368,10 +405,18 @@ Documentation:
 
         return os.linesep.join(lines)
 
-    def __call__(self, function_source: str, type: str):
+    def __call__(self, function_source: str, type: str, parent_source: Optional[str]):
+
+        template_input = {"function": function_source}
+
+        if type == Type.FUNCTIONS:
+            if parent_source:
+                template_input['class'] = parent_source
+            else:
+                template_input['class'] = 'Function does not come from a class'
 
         response = self.chain[type].invoke(
-            {"function": function_source}
+            template_input
         ).strip()
 
         response = self.normalize_left_strip(response)
