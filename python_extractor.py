@@ -279,8 +279,8 @@ Class Context:
 Write comprehensive documentation for the following Python code using reStructuredText (reST) format. The documentation should include a description, parameter explanations, return type, and examples. Ensure the documentation is clear, concise, and follows standard conventions. If the function is from a class use that context to improve the description.
 
 Example output:
-Function Name
-=============
+Function <Function Name>
+========================
 
 Description
 -----------
@@ -288,12 +288,12 @@ Description
 
 Parameters
 ----------
-- **a** (*int*): <Explanation of the first parameter.>
-- **b** (*int*): <Explanation of the second parameter.>
+- a (int): <Explanation of the first parameter.>
+- b (int): <Explanation of the second parameter.>
 
 Returns
 -------
-- **int**: <Explanation of the return type.>
+- int: <Explanation of the return type.>
 
 Examples
 --------
@@ -316,8 +316,8 @@ Documentation:
         class_documentation_template = """
 Write comprehensive header documentation for the following Python class using reStructuredText (reST) format. The documentation should include a description, attribute explanations, method summaries, inheritance diagrams, and examples. Ensure the documentation is clear, concise, and follows standard conventions.
 
-        Class Name
-==========
+<Class Name>
+============
 
 Description
 -----------
@@ -325,11 +325,11 @@ Description
 
 Attributes
 ----------
-- **attribute_name** (*type*): <Explanation of the attribute.>
+- attribute_name (type): <Explanation of the attribute.>
 
 Methods
 -------
-- **method_name(parameters)**: <Brief description of the method.>
+- method_name(parameters): <Brief description of the method.>
 
 Inheritance Diagram
 -------------------
