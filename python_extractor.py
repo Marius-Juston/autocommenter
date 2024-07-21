@@ -450,7 +450,7 @@ Documentation:
             template_input
         ).strip()
 
-        response = self.normalize_left_strip(response)
+        response = self.normalize_left_strip(response, type)
 
         return response
 
