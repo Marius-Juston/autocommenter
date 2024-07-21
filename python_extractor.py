@@ -9,6 +9,7 @@ import black
 from langchain_community.llms.ollama import Ollama
 from langchain_core.prompts import ChatPromptTemplate
 
+
 class Type(Enum):
     FUNCTIONS = 0
     CLASSES = 1
@@ -172,7 +173,7 @@ class PythonExtractor:
 
                 formatted_new_content = black.format_str(new_content, mode=black.Mode())
 
-                self.write_file(file_path, formatted_new_content)
+                # self.write_file(file_path, formatted_new_content)
 
     def write_file(self, file_path, content):
         """
@@ -211,7 +212,7 @@ class PythonExtractor:
 
         node_type: str = node['type']
 
-        print(f"Working on {node_type}: {class_node.name}", f"from {node['parent'].name}" if node['parent'] else "" )
+        print(f"Working on {node_type}: {class_node.name}", f"from {node['parent'].name}" if node['parent'] else "")
 
         documentation = self.get_docstring(class_node)
 
@@ -267,9 +268,13 @@ class PythonExtractor:
 class AIDocumenter:
     def __init__(self):
         # model = Ollama(model="dolphin-mistral")
-        model = Ollama(model="codestral")
+        self.model = Ollama(model="codestral")
+        self.model.num_ctx = 32768
 
         function_documentation_template = """
+Class Context:
+{context}
+        
 Write comprehensive documentation for the following Python code using reStructuredText (reST) format. The documentation should include a description, parameter explanations, return type, and examples. Ensure the documentation is clear, concise, and follows standard conventions. If the function is from a class use that context to improve the description.
 
 Example output:
@@ -303,9 +308,6 @@ Notes
 
 Function:
 {function}
-
-Class Context:
-{class}
 
 Documentation:
 """
@@ -369,8 +371,8 @@ Documentation:
             ]
         )
 
-        self.function_chain = func_prompt | model
-        self.class_chain = class_prompt | model
+        self.function_chain = func_prompt | self.model
+        self.class_chain = class_prompt | self.model
 
         self.chain = {Type.FUNCTIONS: self.function_chain, Type.CLASSES: self.class_chain}
 
@@ -412,13 +414,17 @@ Documentation:
 
         template_input = {"function": function_source}
 
-        if type == Type.FUNCTIONS:
-            if parent_source:
-                template_input['class'] = parent_source
-            else:
-                template_input['class'] = 'Function does not come from a class'
+        chain = self.chain[type]
 
-        response = self.chain[type].invoke(
+        if type == Type.FUNCTIONS:
+            # print(self.model.get_num_tokens(function_source), self.model.get_num_tokens(parent_source))
+
+            if parent_source:
+                template_input['context'] = parent_source
+            else:
+                template_input['context'] = "This function is not part of a class."
+
+        response = chain.invoke(
             template_input
         ).strip()
 
