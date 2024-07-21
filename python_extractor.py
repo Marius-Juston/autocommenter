@@ -421,6 +421,11 @@ Documentation:
             # print(self.model.get_num_tokens(function_source), self.model.get_num_tokens(parent_source))
 
             if parent_source:
+                # python_splitter = RecursiveCharacterTextSplitter.from_language(
+                #     language=Language.PYTHON, chunk_size=50, chunk_overlap=0
+                # )
+                # python_docs = python_splitter.create_documents([PYTHON_CODE])
+
                 template_input['context'] = parent_source
             else:
                 template_input['context'] = "This function is not part of a class."
