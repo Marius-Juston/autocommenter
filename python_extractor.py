@@ -252,6 +252,7 @@ class PythonExtractor:
             "",
             text,
             self.template_message,
+            "",
             f'hash {hash}',
             ""
             ""
