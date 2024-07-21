@@ -2,3 +2,5 @@ black
 langchain_community
 langchain_core
 langchain-ollama
+langchain_chroma
+langchain-text-splitters
