@@ -173,7 +173,7 @@ class PythonExtractor:
 
                 formatted_new_content = black.format_str(new_content, mode=black.Mode())
 
-                # self.write_file(file_path, formatted_new_content)
+                self.write_file(file_path, formatted_new_content)
 
     def write_file(self, file_path, content):
         """
