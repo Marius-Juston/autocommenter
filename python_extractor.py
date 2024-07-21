@@ -382,7 +382,7 @@ Documentation:
 
         line_strip = None
 
-        for line in lines:
+        for i, line in enumerate(lines):
             lines_stripped = line.lstrip()
 
             for mixes in ['====', '----']:
@@ -393,6 +393,18 @@ Documentation:
                         line_strip = min(index, line_strip)
                     else:
                         line_strip = index
+
+                    if i > 0:
+                        prev_line = lines[i - 1].strip()
+
+                        num_characters = len(prev_line)
+
+                        current_line = line.strip()
+
+                        if len(prev_line) > len(current_line):
+                            characters = current_line[0]*num_characters
+
+                            lines[i] = lines[i][:index] + characters
 
         if not line_strip:
             return txt
