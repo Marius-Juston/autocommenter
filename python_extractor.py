@@ -377,7 +377,7 @@ Documentation:
 
         self.chain = {Type.FUNCTIONS: self.function_chain, Type.CLASSES: self.class_chain}
 
-    def normalize_left_strip(self, txt: str):
+    def normalize_left_strip(self, txt: str, type: str):
         lines = txt.split(os.linesep)
 
         line_strip = None
@@ -397,12 +397,21 @@ Documentation:
                     if i > 0:
                         prev_line = lines[i - 1].strip()
 
+                        if Type.FUNCTIONS == type and '====' in line:
+                            if not (' ' in prev_line):
+                                first_char_index = prev_line.index(prev_line[0])
+
+                                lines[i - 1] = lines[i - 1][:first_char_index] + "Function " + lines[i - 1][
+                                                                                               first_char_index:]
+
+                                prev_line = lines[i - 1].strip()
+
                         num_characters = len(prev_line)
 
                         current_line = line.strip()
 
                         if len(prev_line) > len(current_line):
-                            characters = current_line[0]*num_characters
+                            characters = current_line[0] * num_characters
 
                             lines[i] = lines[i][:index] + characters
 
