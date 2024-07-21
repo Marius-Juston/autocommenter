@@ -251,8 +251,8 @@ class PythonExtractor:
         return os.linesep.join([
             "",
             text,
-            self.template_message,
             "",
+            self.template_message,
             f'hash {hash}',
             ""
             ""
