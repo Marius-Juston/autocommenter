@@ -331,11 +331,6 @@ Methods
 -------
 - method_name(parameters): <Brief description of the method.>
 
-Inheritance Diagram
--------------------
-.. inheritance-diagram:: module.ClassName
-   :parts: 1
-
 Examples
 --------
 .. code-block:: python
