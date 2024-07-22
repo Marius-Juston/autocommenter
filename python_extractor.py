@@ -456,6 +456,6 @@ Documentation:
 
 
 if __name__ == '__main__':
-    data = PythonExtractor('codebases/apecs_library')
+    data = PythonExtractor('codebases/')
 
     data.extract()
